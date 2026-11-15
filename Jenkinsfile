@@ -42,10 +42,30 @@ pipeline {
             }
         }
 
+        stage('JaCoCo Code Coverage') {
+            steps {
+                echo '====================================================='
+                echo ' Stage 4: Generate & Publish JaCoCo Code Coverage'
+                echo '====================================================='
+                // Generate JaCoCo HTML, XML, and CSV reports from target/jacoco.exec
+                sh './mvnw jacoco:report'
+
+                // Publish code coverage metrics via Jenkins JaCoCo plugin
+                jacoco(
+                    execPattern: 'target/jacoco.exec',
+                    classPattern: 'target/classes',
+                    sourcePattern: 'src/main/java'
+                )
+
+                // Archive the generated JaCoCo report folder as Jenkins build artifacts
+                archiveArtifacts artifacts: 'target/site/jacoco/**', fingerprint: true, allowEmptyArchive: true
+            }
+        }
+
         stage('Package') {
             steps {
                 echo '====================================================='
-                echo ' Stage 4: Package Executable Spring Boot JAR'
+                echo ' Stage 5: Package Executable Spring Boot JAR'
                 echo '====================================================='
                 sh './mvnw package -DskipTests'
             }
@@ -54,7 +74,7 @@ pipeline {
         stage('Archive') {
             steps {
                 echo '====================================================='
-                echo ' Stage 5: Archive Build Artifacts in Jenkins'
+                echo ' Stage 6: Archive Build Artifacts in Jenkins'
                 echo '====================================================='
                 archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
             }
@@ -63,7 +83,7 @@ pipeline {
         stage('Deploy') {
             steps {
                 echo '====================================================='
-                echo " Stage 6: Deploy Application Locally on Port ${APP_PORT}"
+                echo " Stage 7: Deploy Application Locally on Port ${APP_PORT}"
                 echo '====================================================='
                 sh '''
                     set -e

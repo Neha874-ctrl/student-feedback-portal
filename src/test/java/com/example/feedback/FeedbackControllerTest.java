@@ -81,6 +81,42 @@ class FeedbackControllerTest {
     }
 
     @Test
+    @DisplayName("POST /api/feedback - should reject invalid email format")
+    void shouldRejectInvalidEmailFormat() throws Exception {
+        Feedback invalidFeedback = new Feedback(
+                "Mark Spencer",
+                "plainaddress", // Not an email
+                "DevOps",
+                4,
+                "Good hands-on labs."
+        );
+
+        mockMvc.perform(post("/api/feedback")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(invalidFeedback)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.studentEmail").value("Please provide a valid email address"));
+    }
+
+    @Test
+    @DisplayName("POST /api/feedback - should reject rating below 1")
+    void shouldRejectRatingBelowOne() throws Exception {
+        Feedback invalidFeedback = new Feedback(
+                "Mark Spencer",
+                "mark@example.com",
+                "DevOps",
+                0, // Below minimum 1
+                "Good hands-on labs."
+        );
+
+        mockMvc.perform(post("/api/feedback")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(invalidFeedback)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.rating").value("Rating must be between 1 and 5"));
+    }
+
+    @Test
     @DisplayName("GET /api/feedback - should retrieve all submitted feedback")
     void shouldRetrieveAllFeedback() throws Exception {
         Feedback f1 = new Feedback("Alice Smith", "alice@example.com", "DevOps", 4, "Insightful pipeline demos.");
@@ -93,6 +129,15 @@ class FeedbackControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(2)))
                 .andExpect(jsonPath("$[0].studentName", anyOf(is("Alice Smith"), is("Bob Brown"))));
+    }
+
+    @Test
+    @DisplayName("GET /api/feedback - should return empty list when no feedback exists")
+    void shouldReturnEmptyListWhenNoFeedback() throws Exception {
+        mockMvc.perform(get("/api/feedback")
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(0)));
     }
 
     @Test
@@ -127,7 +172,8 @@ class FeedbackControllerTest {
 
         mockMvc.perform(delete("/api/feedback/" + saved.getId()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true));
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("Feedback deleted successfully"));
 
         mockMvc.perform(get("/api/feedback/" + saved.getId()))
                 .andExpect(status().isNotFound());
@@ -138,6 +184,7 @@ class FeedbackControllerTest {
     void shouldReturn404WhenDeletingNonExistent() throws Exception {
         mockMvc.perform(delete("/api/feedback/999999"))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.success").value(false));
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("Feedback with ID 999999 not found"));
     }
 }
