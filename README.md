@@ -406,3 +406,9 @@ An interactive H2 web console is enabled for inspection during local development
 
 ## 📄 License
 This project is open-source and created for educational and demonstration purposes.
+
+
+
+
+
+#testing the automates trigger
