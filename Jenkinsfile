@@ -51,10 +51,24 @@ pipeline {
                 sh './mvnw jacoco:report'
 
                 // Publish code coverage metrics via Jenkins JaCoCo plugin
+                // Configured with Ant glob patterns, build-over-build delta, and health thresholds
                 jacoco(
-                    execPattern: 'target/jacoco.exec',
-                    classPattern: 'target/classes',
-                    sourcePattern: 'src/main/java'
+                    execPattern: '**/target/jacoco.exec',
+                    classPattern: '**/target/classes',
+                    sourcePattern: '**/src/main/java',
+                    inclusionPattern: '**/*.class',
+                    exclusionPattern: '**/*Test*.class',
+                    buildOverBuild: true,
+                    maximumLineCoverage: '80',
+                    minimumLineCoverage: '50',
+                    maximumBranchCoverage: '80',
+                    minimumBranchCoverage: '50',
+                    maximumInstructionCoverage: '80',
+                    minimumInstructionCoverage: '50',
+                    maximumMethodCoverage: '80',
+                    minimumMethodCoverage: '50',
+                    maximumClassCoverage: '80',
+                    minimumClassCoverage: '50'
                 )
 
                 // Archive the generated JaCoCo report folder as Jenkins build artifacts
