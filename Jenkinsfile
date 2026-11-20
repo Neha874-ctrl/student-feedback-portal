@@ -2,40 +2,34 @@ pipeline {
     agent any
 
     stages {
-        stage('Checkout') {
-            steps {
-                echo 'Source code checkout'
-                checkout scm
-            }
-        }
-
         stage('Build') {
             steps {
-                sh 'chmod +x ./mvnw'
-                sh './mvnw clean compile'
+                sh './mvnw clean package'
             }
         }
 
-        stage('Test') {
+        stage('Staging Deployment') {
             steps {
-                sh './mvnw test'
+                sh '''
+                mkdir -p /opt/cicd/staging
+                cp target/*.jar /opt/cicd/staging/
+                '''
             }
         }
 
-        stage('Package') {
+        stage('Production Approval') {
             steps {
-                sh './mvnw package'
+                input message: 'Approve production deployment?'
             }
         }
-    }
 
-    post {
-        success {
-            echo 'Pipeline completed successfully'
-        }
-
-        failure {
-            echo 'Pipeline failed'
+        stage('Production Deployment') {
+            steps {
+                sh '''
+                mkdir -p /opt/cicd/production
+                cp target/*.jar /opt/cicd/production/
+                '''
+            }
         }
     }
 }
